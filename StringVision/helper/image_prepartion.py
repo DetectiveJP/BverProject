@@ -3,53 +3,116 @@ import numpy as np
 
 
 def fill_holes(img, seed, val):
-    im_th = img.copy()
+    img_th = img.copy()
 
     # Copy the thresholded image.
-    im_floodfill = im_th.copy()
+    img_floodfill = img_th.copy()
 
     # Mask used to flood filling.
-    # Notice the size needs to be 2 pixels than the image.
-    h, w = im_th.shape[:2]
+    # Notice the size needs to be 2 pixels wider than the image.
+    h, w = img_th.shape[:2]
     mask = np.zeros((h + 2, w + 2), np.uint8)
 
     # Floodfill from point (0, 0)
-    if img[0, 0] != val:
+    if img[seed] == val:
         print("WARNING: Filling something you shouldn't")
-    cv2.floodFill(im_floodfill, mask, seed, val);
+
+    cv2.floodFill(img_floodfill, mask, seed, val)
 
     # Invert floodfilled image
-    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+    im_floodfill_inv = cv2.bitwise_not(img_floodfill)
 
     # Combine the two images to get the foreground.
-    im_out = im_th | im_floodfill_inv
+    im_out = img_th | im_floodfill_inv
 
     return im_out
 
 
-def remove_boarders(img, seed):
-    search = img.copy()
-    x, y = seed
+def remove_boarders(img, seed, val):
+    img_border = img.copy()
 
-    if search[x, y] != 0:
-        search[x, y] = 0
+    # Mask used to flood filling.
+    # Notice the size needs to be 2 pixels wider than the image.
+    h, w = img_border.shape[:2]
+    mask = np.zeros((h + 2, w + 2), np.uint8)
 
+    cv2.floodFill(img_border, mask, seed, val)
+
+    return img_border
+
+
+def find_conturs(img):
+    font = cv2.FONT_HERSHEY_COMPLEX
+
+    img_cont = img.copy()
+
+    img_show = cv2.cvtColor(img_cont, cv2.COLOR_BAYER_GR2RGB)
+    # Detecting contours in image.
+    contours, _ = cv2.findContours(img_cont, cv2.RETR_TREE,
+                                   cv2.CHAIN_APPROX_SIMPLE)
+    cells = []
+    # Going through every contours found in the image.
+    for cnt in contours:
+
+        approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
+
+        # draws boundary of contours.
+        cv2.drawContours(img_show, [approx], 0, (0, 0, 255), 3)
+
+        # Used to flatted the array containing
+        # the co-ordinates of the vertices.
+        n = approx.ravel()
+        i = 0
+
+        for j in n:
+            if i % 2 == 0:
+                x = n[i]
+                y = n[i + 1]
+
+                # String containing the co-ordinates.
+                string = str(x) + " " + str(y)
+
+                if i == 0:
+                    # text on topmost co-ordinate.
+                    cv2.putText(img_show, "Arrow tip: " + string, (x, y),
+                                font, 0.5, (0, 255, 0))
+                else:
+                    # text on remaining co-ordinates.
+                    cv2.putText(img_show, string, (x, y),
+                                font, 0.5, (255, 0, 0))
+            i = i + 1
+
+        cell_corners = approx.ravel()
+
+    return cell_corners, img_show
 
 
 def extract_cell(img):
     img_loaded = img.copy()
 
     # binary image
-    ret, binary = cv2.threshold(img_loaded, 100, 255, cv2.THRESH_BINARY_INV)
+    ret, img_binary = cv2.threshold(img_loaded, 100, 255, cv2.THRESH_BINARY_INV)
 
-    eroded = cv2.erode(binary, None, iterations=1)
-    cv2.imwrite('eroded.bmp', eroded)
+    img_eroded = cv2.erode(img_binary, None, iterations=1)
+    cv2.imwrite('eroded.bmp', img_eroded)
 
-    filled = fill_holes(eroded, (0, 0), 255)
-    cv2.imwrite('filled.bmp', filled)
+    img_filled = fill_holes(img_eroded, (0, 0), 255)  # (1. horizontal, 2. vertical)
+    cv2.imwrite('filled.bmp', img_filled)
 
-    border_removed = fill_holes(filled, (0, 600), 125)
-    cv2.imwrite('borders.bmp', border_removed)
-    img_out = border_removed
+    img_border_removed = remove_boarders(img_filled, (0, 600), 0)
+    img_border_removed = remove_boarders(img_border_removed, (1600, 600), 0)
 
-    return img_out
+    i = 1600
+    while img_border_removed[600,  i] != 255:
+        i -= 1
+        if i == 0:
+            break
+    if img_border_removed[600 , i] == 255:
+        img_border_removed = remove_boarders(img_border_removed, (i, 600), 0)
+
+
+
+
+    cv2.imwrite('borders.bmp', img_border_removed)
+
+    return img_border_removed
