@@ -5,6 +5,7 @@ import sys
 
 # load the image, convert it to grayscale, and blur it slightly
 imgsrc = r"C:\Users\dnns.hrrn\Dropbox\bver_Projekt\Bilder\Mit_IR-Belechtung_Diffusor\Produkt\Image__2020-05-15__11-20-25.bmp"
+
 gray = cv2.imread(imgsrc, 0)
 if gray is None:
     sys.exit('Failed to load the image')
@@ -48,8 +49,8 @@ flooded = cv2.bitwise_not(flooded_inv)
 # Vertical = x, horizontal = y
 x1 = 0
 x2 = 1200
-y1 = 57
-y2 = 901
+y1 = 1500
+#y2 = 901
 
 cropped = flooded[x1:x2, y1:y1+1].copy()
 a = x1
@@ -69,6 +70,10 @@ x_scale_factor = 0.166313559322033
 
 cell_width_mm = cell_width_px * x_scale_factor
 print("Cell width [mm]: " + str(cell_width_mm))
+
+cv2.imwrite('binary.bmp', binary)
+cv2.imwrite('flooded.bmp', flooded)
+cv2.imwrite('cropped.bmp', cropped)
 
 #flooded = cv2.floodFill(eroded, cv2::Point(0,0), Scalar(255));
 #kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
