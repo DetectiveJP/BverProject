@@ -10,7 +10,7 @@ from helper.image_loader import load_images
 # cv2.imshow('Original', cv2.resize(gray, (1500, 800)))
 
 
-#gray = load_images()
+gray = load_images()
 flooded = extract_cell(gray)
 
 
