@@ -2,7 +2,11 @@
 CameraSetup/.idea/workspace.xml
 CameraSetup/.idea/CameraSetup.iml
 *.bmp
+<<<<<<< HEAD
 StringVision/.idea/workspace.xml
 *.pyc
 StringVision/.idea/workspace.xml
 StringVision/.idea/workspace.xml
+=======
+/StringVision/.idea
+>>>>>>> bae26ef84dc4eb8fe76bf87c0731f28d2801ce2f
