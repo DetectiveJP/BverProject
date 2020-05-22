@@ -14,6 +14,7 @@ gray = load_images()
 flooded = extract_cell(gray)
 # Das ist ein Test
 
+#test 123
 
 # Vertical = x, horizontal = y
 x1 = 0
