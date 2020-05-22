@@ -16,9 +16,10 @@ flooded = extract_cell(gray)
 
 #test 123
 #test999
+#test 345
 # Vertical = x, horizontal = y
 x1 = 0
-x2 = 1200
+x2 = 12
 y1 = 1500
 #y2 = 901
 
