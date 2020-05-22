@@ -2,27 +2,18 @@ import imutils
 import numpy as np
 import cv2
 import sys
+from helper.image_prepartion import extract_cell
+from helper.image_loader import load_images
 
-# load the image, convert it to grayscale, and blur it slightly
-imgsrc = r"C:\Users\dnns.hrrn\Dropbox\bver_Projekt\Bilder\Mit_IR-Belechtung_Diffusor\Produkt\Image__2020-05-15__11-20-25.bmp"
-
-gray = cv2.imread(imgsrc, 0)
-if gray is None:
-    sys.exit('Failed to load the image')
 
 # show original image
 # cv2.imshow('Original', cv2.resize(gray, (1500, 800)))
 
-# binary image
-ret, binary = cv2.threshold(gray,100,255,cv2.THRESH_BINARY_INV)
-eroded = cv2.erode(binary, None, iterations=1)
+
+gray = load_images()
+flooded = extract_cell(gray)
 
 
-
-
-
-flooded_inv = fill_holes(eroded)
-flooded = cv2.bitwise_not(flooded_inv)
 
 # Vertical = x, horizontal = y
 x1 = 0
@@ -32,10 +23,10 @@ y1 = 1500
 
 cropped = flooded[x1:x2, y1:y1+1].copy()
 a = x1
-while cropped[a, 0] != 0:
+while cropped[a, 0] != 255:
     a = a + 1
 b = x2 - 1
-while cropped[b, 0] != 0:
+while cropped[b, 0] != 255:
     b = b - 1
   
 pixelSum = np.sum(cropped[a:b, 0])
@@ -49,8 +40,7 @@ x_scale_factor = 0.166313559322033
 cell_width_mm = cell_width_px * x_scale_factor
 print("Cell width [mm]: " + str(cell_width_mm))
 
-cv2.imwrite('binary.bmp', binary)
-cv2.imwrite('flooded.bmp', flooded)
+#cv2.imwrite('binary.bmp', binary)
 cv2.imwrite('cropped.bmp', cropped)
 
 #flooded = cv2.floodFill(eroded, cv2::Point(0,0), Scalar(255));
