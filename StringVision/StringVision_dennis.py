@@ -13,7 +13,7 @@ from helper.image_loader import load_images
 gray = load_images()
 flooded = extract_cell(gray)
 
-
+#test 123
 
 # Vertical = x, horizontal = y
 x1 = 0
