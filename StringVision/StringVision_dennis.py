@@ -12,7 +12,7 @@ from helper.image_loader import load_images
 
 gray = load_images()
 flooded = extract_cell(gray)
-
+# Das ist ein Test
 
 
 # Vertical = x, horizontal = y
