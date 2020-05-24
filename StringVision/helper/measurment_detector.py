@@ -35,10 +35,10 @@ def get_width(img, pos, angle):
 
     img_slice = img[w1:w2, pos:pos + 1].copy()
     a = 0
-    while img_slice[a, 0] != 255:
+    while a < img_slice.size and img_slice[a, 0] != 255:
         a = a + 1
     b = img_slice.size - 1
-    while img_slice[b, 0] != 255:
+    while b > 0 and img_slice[b, 0] != 255:
         b = b - 1
 
     pixel_sum = np.sum(img_slice[a:b, 0])

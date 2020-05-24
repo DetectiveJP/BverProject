@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+import os
+
+from helper.image_loader import load_image_list, load_images
 
 
 def fill_holes(img, seed, val):
@@ -103,16 +106,89 @@ def extract_cell(img):
     img_border_removed = remove_boarders(img_border_removed, (1600, 600), 0)
 
     i = 1600
-    while img_border_removed[600,  i] != 255:
+    while img_border_removed[600, i] != 255:
         i -= 1
         if i == 0:
             break
-    if img_border_removed[600 , i] == 255:
+    if img_border_removed[600, i] == 255:
         img_border_removed = remove_boarders(img_border_removed, (i, 600), 0)
-
-
-
 
     cv2.imwrite('borders.bmp', img_border_removed)
 
     return img_border_removed
+
+
+def calibrate(path, pattern):
+    # termination criteria
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
+
+    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+    objp = np.zeros((pattern[0] * pattern[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:pattern[0], 0:pattern[1]].T.reshape(-1, 2)
+
+    # Arrays to store object points and image points from all the images.
+    objpoints = []  # 3d point in real world space
+    imgpoints = []  # 2d points in image plane.
+
+    images = load_image_list(path)
+
+    for image in images:
+        img_gray = load_images(os.path.join(path, image))
+        img_show = cv2.cvtColor(img_gray, cv2.COLOR_BAYER_GR2RGB)
+
+        # Find the chess board corners, (9x6) = Number of inner corners per a chessboard row and column
+        ret, corners = cv2.findChessboardCorners(img_gray, pattern, flags)
+
+        # If found, add object points, image points (after refining them)
+        if ret:
+            objpoints.append(objp)
+
+            corners2 = cv2.cornerSubPix(img_gray, corners, (11, 11), (-1, -1), criteria)
+            imgpoints.append(corners2)
+
+            # Draw and display the corners
+            img_show = cv2.drawChessboardCorners(img_show, pattern, corners2, ret)
+            #cv2.imwrite('chessboard.bmp', img)
+            cv2.imshow('img', img_show)
+            cv2.waitKey(3000)
+
+        # Calibrate Camera with found parameters
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img_gray.shape[::-1], None, None)
+
+        print(str(path) + str(image))
+
+    # Calcutate re-projection error to check found parameters
+    mean_error = 0
+    for i in range(len(objpoints)):
+        imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
+        error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+        mean_error += error
+
+    error = mean_error / len(objpoints)
+    print("total error: {}".format(error))
+
+    return mtx, dist, error
+
+
+# Quelle: https://www.programcreek.com/python/example/84096/cv2.undistort
+def undistort(image, mtx, dist, alpha):
+    """
+    image: an image
+    alpha = 0: returns undistored image with minimum unwanted pixels (image
+                pixels at corners/edges could be missing)
+    alpha = 1: retains all image pixels but there will be black to make up
+                for warped image correction
+    """
+    h, w = image.shape[:2]
+    # mtx = self.data['camera_matrix']
+    # dist = self.data['dist_coeff']
+    # Adjust the calibrations matrix
+    # alpha=0: returns undistored image with minimum unwanted pixels (image pixels at corners/edges could be missing)
+    # alpha=1: retains all image pixels but there will be black to make up for warped image correction
+    # returns new cal matrix and an ROI to crop out the black edges
+    newcameramtx, _ = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), alpha)
+    # undistort
+    ret = cv2.undistort(image, mtx, dist, None, newcameramtx)
+
+    return ret

@@ -2,25 +2,35 @@ import os
 import numpy as np
 import cv2
 
-from helper.image_prepartion import extract_cell, find_conturs
+from helper.image_prepartion import extract_cell, find_conturs, undistort, calibrate
 from helper.image_loader import load_images, load_image_list
 from helper.measurment_detector import get_center, draw_center, get_width
 
 # Vertical = x, horizontal = y
 x_scale_factor = 0.166313559322033
-image_src_path = r"C:\Users\dnns.hrrn\Dropbox\bver_Projekt\Bilder\Mit_IR-Belechtung_Diffusor\Produkt"
+mtx = None
+dist = None
+error = None
 
+image_src_path = r"C:\Users\dnns.hrrn\Dropbox\bver_Projekt\Bilder\Mit_IR-Belechtung_Diffusor\Produkt"
+img_src_path_calib = r"C:\Users\dnns.hrrn\Dropbox\bver_Projekt\Bilder\Mit_IR-Belechtung_Diffusor\Kalibration"
+
+do_calib = True
+
+if do_calib:
+    mtx, dist, error = calibrate(img_src_path_calib, (6, 9))
 
 list_image = load_image_list(image_src_path)
 
 for filename in list_image:
     img_orig = load_images(os.path.join(image_src_path, filename))
-    img_cell = extract_cell(img_orig)
+    img_undist = undistort(img_orig, mtx, dist, 0)
+    cv2.imshow("undistorted", img_undist)
+    img_cell = extract_cell(img_undist)
 
     cell_contoure, img_show_contoures = find_conturs(img_cell)
     cell_center_x, cell_center_y, cell_angle = get_center(cell_contoure)
     img_show_center = draw_center(cell_center_x, cell_center_y, cell_angle, img_show_contoures)
-
 
     print(filename)
     cell_width_px = get_width(img_cell, cell_center_y, cell_angle)
