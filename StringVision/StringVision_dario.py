@@ -15,11 +15,10 @@ list_image = load_image_list(image_src_path)
 for filename in list_image:
     img_orig = load_images(os.path.join(image_src_path, filename))
     img_cell = extract_cell(img_orig)
-    cnt, img_fragment = find_fragment(img_cell)
+    cnts, img_fragment = find_fragment(img_cell)
 
     print(filename)
-    Count_fragments = cnt
-    print("Counted Fragments: " + str(cnt))
+    print("Counted Fragments: " + str(cnts))
 
     fragment_save_path = os.path.join(image_src_path, 'Fragment')
     if os.path.exists(fragment_save_path):
