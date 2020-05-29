@@ -27,4 +27,4 @@ def find_fragment(img):
                 cv2.circle(img_show, farthest_point, 12, [0, 0, 255], -1)
 
                 return cnts, img_show
-        return cnts, img_frag
+    return cnts, img_frag

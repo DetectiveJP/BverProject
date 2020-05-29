@@ -2,7 +2,7 @@ import os
 import cv2
 
 from helper.fragment_detector import find_fragment
-from helper.image_prepartion import extract_cell
+from helper.image import extract_cell
 from helper.image_loader import load_images, load_image_list
 
 
