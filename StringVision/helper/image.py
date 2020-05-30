@@ -4,11 +4,12 @@ import os
 
 COLOR_CELL = (0, 255, 0)
 
+
 # load the image, convert it to grayscale, and blur it slightly
 def load_images(filename):
     # filename = r"C:\Users\dnns.hrrn\Dropbox\bver_Projekt\Bilder\Mit_IR-Belechtung_Diffusor\Produkt\Image__2020-05-15__11-20-25.bmp "
 
-  #  print(filename)
+    #  print(filename)
 
     img_src = filename
 
@@ -24,7 +25,7 @@ def load_image_list(path):
     directory = path
     image_list = []
     for filename in os.listdir(directory):
-        if filename.endswith(".bmp") :
+        if filename.endswith(".bmp"):
             image_list.append(filename)
         else:
             continue
@@ -187,8 +188,8 @@ def calibrate_camera(path, pattern, length):
             # Draw and display the corners
             img_show = cv2.cvtColor(img_gray, cv2.COLOR_BAYER_GR2RGB)
             img_show = cv2.drawChessboardCorners(img_show, pattern, corners2, ret)
-            #cv2.imshow('img', img_show)
-            #cv2.waitKey(50)
+            # cv2.imshow('img', img_show)
+            # cv2.waitKey(50)
 
         objpoints.append(objp)
         imgpoints.append(corners2)

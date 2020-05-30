@@ -21,15 +21,12 @@ file_dir = os.path.dirname(__file__)
 image_src_path_prod = os.path.join(file_dir, "pictures", "product")
 img_src_path_calib = os.path.join(file_dir, "pictures", "calibration")
 chessBoardPattern = (6, 9)
-squareLenght = 26 # Lenght of a square block on the chess board image
+squareLenght = 26  # Lenght of a square block on the chess board image
 
 print("Read calibration images with chessboard pattern and calibrate camera ===========\n")
-mtx, dist, error, px2mmFactor  = image.calibrate_camera(img_src_path_calib, chessBoardPattern, squareLenght)
-
-
+mtx, dist, error, px2mmFactor = image.calibrate_camera(img_src_path_calib, chessBoardPattern, squareLenght)
 
 print("Read production images and process them ========================================\n")
-
 
 # Load image list
 list_image = image.load_image_list(image_src_path_prod)
@@ -69,6 +66,19 @@ for filename in list_image:
     result_save_path = os.path.join(image_src_path_prod, 'Result')
     if os.path.exists(result_save_path):
         cv2.imwrite(os.path.join(result_save_path, filename[:-4] + '_result.bmp'), img_result)
+
+    # generate a Protocol
+    protocol_save_path = os.path.join(image_src_path_prod, 'Protocol')
+    if os.path.exists(protocol_save_path):
+        f = open(os.path.join(protocol_save_path, filename[:-4] + '_protocol.txt'), 'w+')
+        f.write('Review log' + "\n")
+        f.write(("Loaded image: " + filename + "\n"))
+        f.write("\n")
+        f.write("Cell width [px]: " + str(cell_width_mm) + "\n")
+        f.write("Cell width [mm]: " + str(cell_width_mm) + "\n")
+        f.write("Cell orientation [deg]: " + str(np.rad2deg(cell_center[ANGLE])) + "\n")
+        f.write("Cell defect count [n]: " + str(cell_defect_count) + "\n")
+        f.close()
 
 cv2.waitKey()
 cv2.destroyAllWindows()
