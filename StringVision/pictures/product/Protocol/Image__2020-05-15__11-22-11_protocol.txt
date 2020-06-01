@@ -1,0 +1,7 @@
+Review log
+Loaded image: Image__2020-05-15__11-22-11.bmp
+
+Cell width [px]: 157.806651767946
+Cell width [mm]: 157.806651767946
+Cell orientation [deg]: 0.9772319580984291
+Cell defect count [n]: 3

@@ -2,15 +2,18 @@ import cv2
 import numpy as np
 import os
 
+# Color to mark cell contour
 COLOR_CELL = (0, 255, 0)
 
 
 # load the image, convert it to grayscale, and blur it slightly
 def load_images(filename):
-    # filename = r"C:\Users\dnns.hrrn\Dropbox\bver_Projekt\Bilder\Mit_IR-Belechtung_Diffusor\Produkt\Image__2020-05-15__11-20-25.bmp "
+    """
+    Load image from a given filename which includes absolute file path
 
-    #  print(filename)
-
+    :param filename: File name includes absolute file path
+    :return: Loaded image for processing
+    """
     img_src = filename
 
     img_in = cv2.imread(img_src, 0)
@@ -22,6 +25,12 @@ def load_images(filename):
 
 
 def load_image_list(path):
+    """
+    Create a list of images from given path
+
+    :param path: Paht to folder with images to process
+    :return: List of images inside the folder on path
+    """
     directory = path
     image_list = []
     for filename in os.listdir(directory):
@@ -34,6 +43,16 @@ def load_image_list(path):
 
 
 def fill_holes(img, seed, val):
+    """
+    Removes small holes in the image starting on a certain seed point.
+
+    Source: https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
+
+    :param img: Gray scale image in which the boarders should be removed
+    :param seed: Seed point, where the flood fill needs to start
+    :param val: Set value for the flood fill method.
+    :return: Image with removed holes
+    """
     img_th = img.copy()
 
     # Copy the thresholded image.
@@ -60,6 +79,14 @@ def fill_holes(img, seed, val):
 
 
 def remove_boarders(img, seed, val):
+    """
+    Remove boarders using floodfill(). Starts at a certain seed point with given value
+
+    :param img: Gray scale image in which the boarders should be removed
+    :param seed: Seed point, where the flood fill needs to start
+    :param val: Set value for the flood fill method.
+    :return: Image with removed borders
+    """
     img_border = img.copy()
 
     # Mask used to flood filling.
@@ -73,6 +100,14 @@ def remove_boarders(img, seed, val):
 
 
 def find_contours(img):
+    """
+    Find cell contours in a image and draw into the image.
+
+    Source: https://www.geeksforgeeks.org/find-co-ordinates-of-contours-using-opencv-python/?ref=rp
+
+    :param img: Binary image with one single cell in it, where the contours should be found
+    :return: Corners of the found cell and a image with found contour draw in into it.
+    """
     font = cv2.FONT_HERSHEY_COMPLEX
 
     img_cont = img.copy()
@@ -117,6 +152,12 @@ def find_contours(img):
 
 
 def extract_cell(img):
+    """
+    Extract cell out of a gray scale image and removes boarders elements.
+
+    :param img: Gray scale image in which a cell should be found
+    :return: image with extracted cell and removed boarders
+    """
     img_loaded = img.copy()
 
     # binary image
@@ -126,7 +167,7 @@ def extract_cell(img):
     cv2.imwrite('eroded.bmp', img_eroded)
 
     img_filled = fill_holes(img_eroded, (0, 0), 255)  # (1. horizontal, 2. vertical)
-    cv2.imwrite('filled.bmp', img_filled)
+    cv2.imwrite('holes_filled.bmp', img_filled)
 
     img_border_removed = remove_boarders(img_filled, (0, 600), 0)
     img_border_removed = remove_boarders(img_border_removed, (1600, 600), 0)
@@ -139,12 +180,22 @@ def extract_cell(img):
     if img_border_removed[600, i] == 255:
         img_border_removed = remove_boarders(img_border_removed, (i, 600), 0)
 
-    cv2.imwrite('borders.bmp', img_border_removed)
+    cv2.imwrite('removed_borders.bmp', img_border_removed)
 
     return img_border_removed
 
 
 def find_chessboard_corners(img, pattern):
+    """
+    Finds corners of a chessboard in a image including subcorner accuarcy
+
+    Source: https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/
+            py_calibration.html
+
+    :param img: Image with chessboard pattern
+    :param pattern: Dimension of the chessboard pattern
+    :return: Found chess board corners
+    """
     # termination criteria
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
@@ -158,19 +209,24 @@ def find_chessboard_corners(img, pattern):
 
     # If found, add object points, image points (after refining them)
     if ret:
-        corners2 = cv2.cornerSubPix(img, corners, (11, 11), (-1, -1), criteria)
+        corners_out = cv2.cornerSubPix(img, corners, (11, 11), (-1, -1), criteria)
 
-    return ret, objp, corners2
+    return ret, objp, corners_out
 
 
 def calibrate_camera(path, pattern, length):
-    # termination criteria
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-    flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE
+    """
+    Reads chessboard images and calibrates camera with camera matrix and distortion coefficients.
+    Calculates scale factor between image and real world coordinates.
 
-    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-    # objp = np.zeros((pattern[0] * pattern[1], 3), np.float32)
-    # objp[:, :2] = np.mgrid[0:pattern[0], 0:pattern[1]].T.reshape(-1, 2)
+    Source: https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/
+            py_calibration.html
+
+    :param path: Path to folder with chessboard pictures
+    :param pattern: Chessboard pattern on images for calibration
+    :param length: Length of one squaer in the chessboad image
+    :return: Camera matrix, distortion coefficients, calibration accuracy and scale factor(pixels to mm)
+    """
 
     # Arrays to store object points and image points from all the images.
     objpoints = []  # 3d point in real world space
@@ -181,21 +237,32 @@ def calibrate_camera(path, pattern, length):
     for image in images:
         load_path = os.path.join(path, image)
         img_gray = load_images(load_path)
-        print("Image loaded: " + load_path)
+        print("Image loaded for calibration: " + load_path)
         ret, objp, corners2 = find_chessboard_corners(img_gray, pattern)
 
         if ret:
             # Draw and display the corners
             img_show = cv2.cvtColor(img_gray, cv2.COLOR_BAYER_GR2RGB)
             img_show = cv2.drawChessboardCorners(img_show, pattern, corners2, ret)
-            # cv2.imshow('img', img_show)
-            # cv2.waitKey(50)
+            cv2.imshow('Loaded chessboard image with found corners', img_show)
+            cv2.waitKey(200)
 
         objpoints.append(objp)
         imgpoints.append(corners2)
 
-        # Calibrate Camera with found parameters
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img_gray.shape[::-1], None, None)
+    # Calibrate Camera with found parameters
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img_gray.shape[::-1], None, None)
+
+    if ret:
+        print("\nCamera calibration successful!")
+        cam_mtx = mtx.ravel()
+        print(f'\tCamera matrix:\n\t\tf_x = {cam_mtx[0]}\n\t\tf_y = {cam_mtx[4]}')
+        print(f'\n\t\tc_y = {cam_mtx[5]}\n\t\tc_x = {cam_mtx[2]}')
+        dist_coef =dist.ravel()
+        print(f'\tDistortion coefficients:\n\t\tk_1 = {dist_coef[0]}\n\t\tk_2 = {dist_coef[1]}')
+        print(f'\n\t\tp_1 = {dist_coef[2]}\n\t\tp_2 = {dist_coef[3]}\n\t\tk_3 = {dist_coef[4]}')
+    else:
+        print("Camera calibration failed")
 
     # Calcutate re-projection error to check found parameters
     mean_error = 0
@@ -217,23 +284,40 @@ def calibrate_camera(path, pattern, length):
 
 
 def scale_pixel2mm(img, pattern, length):
-    img_undist = img.copy()
-    ret, objp, corners = find_chessboard_corners(img_undist, pattern)
+    """
+    Calculates scale factor to convert image pixel coordinates into real world coordinates.
 
+    :param img: Distorted gray scale image
+    :param pattern: Pattern of the chessboard in the image
+    :param length: Lenght of one square in the chessboard image
+    :return: Pixel to real world coordinates scale factor
+    """
     px2mm_factor = 0
     sum_x = 0
     sum_y = 0
 
+    # Undistord image to scale the factor on a correct image
+    img_undist = img.copy()
+
+    # Search again for the corners to calculate the distance between to corners
+    ret, objp, corners = find_chessboard_corners(img_undist, pattern)
+
+    # Convert array to a flat array
     crns = corners.ravel()
 
+    # Summarize all corners in the middle of the image on axis x
     for i in range(4, 88, 12):
         sum_x += (crns[i + 12] - crns[i])
 
+    # Summarize all corners in the middle of the image on axis y
     for i in range(1, 9, 2):
         sum_y += (crns[i] - crns[i + 2])
 
+    # Calculate average
     avg_x = sum_x / 7
     avg_y = sum_y / 4
+
+    # Assure the average between x anc y axis is close to each other. Indicates accurate calibration
     if abs(avg_x - avg_y) < 5:
         px2mm_factor = length / ((avg_x + avg_y) / 2)
         print("Pixel to mm scale factor: {}".format(px2mm_factor) + "\n")
