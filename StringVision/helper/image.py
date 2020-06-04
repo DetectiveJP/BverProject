@@ -82,6 +82,8 @@ def remove_boarders(img, seed, val):
     """
     Remove boarders using floodfill(). Starts at a certain seed point with given value
 
+    Source: https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
+
     :param img: Gray scale image in which the boarders should be removed
     :param seed: Seed point, where the flood fill needs to start
     :param val: Set value for the flood fill method.
@@ -160,37 +162,61 @@ def extract_cell(img):
     """
     img_loaded = img.copy()
 
-    # binary image
+    # Convert to binary image
     ret, img_binary = cv2.threshold(img_loaded, 100, 255, cv2.THRESH_BINARY_INV)
+    cv2.imwrite('ExtractCell_1_binary.bmp',img_binary)
 
+    # Erode image to eliminate wires between cells
     img_eroded = cv2.erode(img_binary, None, iterations=1)
-    cv2.imwrite('eroded.bmp', img_eroded)
+    cv2.imwrite('ExtractCell_2_eroded.bmp', img_eroded)
 
-    img_filled = fill_holes(img_eroded, (0, 0), 255)  # (1. horizontal, 2. vertical)
-    cv2.imwrite('holes_filled.bmp', img_filled)
+    # Fill holes to eliminate sprinkles on cell
+    img_filled = fill_holes(img_eroded, (0, 0), 255)
+    cv2.imwrite('ExtractCell_3_holes_filled.bmp', img_filled)
 
-    img_border_removed = remove_boarders(img_filled, (0, 600), 0)
-    img_border_removed = remove_boarders(img_border_removed, (1600, 600), 0)
+    # Remove border objects
+    seed = [0, 600]
+    img_border_removed = remove_boarders(img_filled, tuple(seed), 0)
+    seed = [1600, 600]
+    img_border_removed = remove_boarders(img_border_removed, tuple(seed), 0)
 
-    i = 1600
-    while img_border_removed[600, i] != 255:
+    # Find second cell an remove them to get only one cell
+    ret, seed[0] = find_object(img_border_removed, seed)
+    if ret:
+        img_border_removed = remove_boarders(img_border_removed, tuple(seed), 0)
+    cv2.imwrite('ExtractCell_4_removed_borders.bmp', img_border_removed)
+
+    return img_border_removed
+
+
+def find_object(img, seed):
+    """
+    Find a bright object in a binary image to create a seed for boarder remove method. Searching is
+    only done in horizontal direction.
+
+    :param      img: binary image
+    :param      seed: Start point for the serach of a bright object
+    :return:    ret successful/failed to find a bright object,
+                i = index, where the bright object was found in horizontal direciton
+    """
+    img_find = img.copy()
+    i = seed[0]
+    while img_find[seed[1], i] != 255:
         i -= 1
         if i == 0:
             break
-    if img_border_removed[600, i] == 255:
-        img_border_removed = remove_boarders(img_border_removed, (i, 600), 0)
 
-    cv2.imwrite('removed_borders.bmp', img_border_removed)
+    ret = img_find[seed[1], i] == 255
 
-    return img_border_removed
+    return ret, i
 
 
 def find_chessboard_corners(img, pattern):
     """
     Finds corners of a chessboard in a image including subcorner accuarcy
 
-    Source: https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/
-            py_calibration.html
+    Source:
+    https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
 
     :param img: Image with chessboard pattern
     :param pattern: Dimension of the chessboard pattern
@@ -219,8 +245,8 @@ def calibrate_camera(path, pattern, length):
     Reads chessboard images and calibrates camera with camera matrix and distortion coefficients.
     Calculates scale factor between image and real world coordinates.
 
-    Source: https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/
-            py_calibration.html
+    Source:
+    https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
 
     :param path: Path to folder with chessboard pictures
     :param pattern: Chessboard pattern on images for calibration
@@ -242,13 +268,18 @@ def calibrate_camera(path, pattern, length):
 
         if ret:
             # Draw and display the corners
-            img_show = cv2.cvtColor(img_gray, cv2.COLOR_BAYER_GR2RGB)
-            img_show = cv2.drawChessboardCorners(img_show, pattern, corners2, ret)
-            cv2.imshow('Loaded chessboard image with found corners', img_show)
-            cv2.waitKey(200)
+            img_result = cv2.cvtColor(img_gray, cv2.COLOR_BAYER_GR2RGB)
+            img_result = cv2.drawChessboardCorners(img_result, pattern, corners2, ret)
+            cv2.imshow('Loaded chessboard image with found corners', img_result)
+            cv2.waitKey(100)
 
         objpoints.append(objp)
         imgpoints.append(corners2)
+
+        # Save picture
+        result_save_path = os.path.join(path, 'Result')
+        if os.path.exists(result_save_path):
+            cv2.imwrite(os.path.join(result_save_path, image[:-4] + '_result.bmp'), img_result)
 
     # Calibrate Camera with found parameters
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img_gray.shape[::-1], None, None)
@@ -264,14 +295,14 @@ def calibrate_camera(path, pattern, length):
     else:
         print("Camera calibration failed")
 
-    # Calcutate re-projection error to check found parameters
+    # Calculate re-projection error to check found parameters
     mean_error = 0
     for i in range(len(objpoints)):
         imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
         error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
         mean_error += error
 
-    error = mean_error / len(objpoints)
+    reprojected_error = mean_error / len(objpoints)
     print("Total calibration error: {}".format(error) + "\n")
 
     # Scale pixel to mm on chessboard
@@ -280,7 +311,7 @@ def calibrate_camera(path, pattern, length):
     img_undist = undistorted_image(img_chessboard, mtx, dist, 0)
     factor = scale_pixel2mm(img_undist, pattern, length)
 
-    return mtx, dist, error, factor
+    return mtx, dist, reprojected_error, factor
 
 
 def scale_pixel2mm(img, pattern, length):
@@ -327,7 +358,9 @@ def scale_pixel2mm(img, pattern, length):
 
 def undistorted_image(image, mtx, dist, alpha):
     """
-    Quelle: https://www.programcreek.com/python/example/84096/cv2.undistort
+    Creates an image without distortion by a given camera matrix and distortion coefficients.
+
+    Source: https://www.programcreek.com/python/example/84096/cv2.undistort
 
     image: an image
     alpha = 0: returns undistored image with minimum unwanted pixels (image

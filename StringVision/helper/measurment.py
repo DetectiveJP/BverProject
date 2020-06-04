@@ -11,6 +11,14 @@ line_thickness = 2
 
 
 def get_cell_center(contour, img_result):
+    """
+    Order corner points of the received contour and calculate the center of point. The order of the points from find
+    contour method isn't always the same.
+
+    :param contour: Contour of a cell
+    :param img_result: Image to display the found center
+    :return: Center of the cell
+    """
     corner_points = contour.ravel()
     # horizontal = x, vertical = y
     # corner_points = [x0 y0 x1 y1 ....
@@ -41,6 +49,15 @@ def get_cell_center(contour, img_result):
 
 
 def draw_cell_center(center_x, center_y, angle, img_result):
+    """
+    Draw a cross on the cell center and mark pixel coordinates and angle of cell
+
+    :param center_x: Center in horizontal direction
+    :param center_y: Center in vertical direction
+    :param angle: Angle of the cell
+    :param img_result: Image to display the found center
+    :return: None
+    """
     x1 = center_x - 10
     x2 = center_x + 10
     y1 = center_y - 10
@@ -58,6 +75,19 @@ def draw_cell_center(center_x, center_y, angle, img_result):
 
 
 def get_cell_width(img, pos, angle, factor, img_result):
+    """
+    Measure the cell width on a given position on the cell. It extracts a slice on a given position out of the images
+    and searches for value changes between 0 and 255 (dark / white). This change indicates the cell edge. Start
+    searching from top and bottom direction cell center. Difference between the found cell edges is the width in pixels.
+    This width needs to be corrected by the angel of the cell and scaled to real world coordinates.
+
+    :param img: Binary image with a cell in it
+    :param pos: Position in the image, where to measure the width
+    :param angle: Angle of the given cell to correct the measured cell width
+    :param factor: Scale factor to convert pixel in real world coordinates
+    :param img_result: Image to display the measured cell width
+    :return: cell width in real world and pixel coordinates
+    """
     w1 = 0
     w2 = img.size - 1
 
@@ -85,19 +115,35 @@ def get_cell_width(img, pos, angle, factor, img_result):
 
 
 def find_cell_defects(img, contour, img_result):
+    """
+    Find defects on the cell edges and report count.
+
+    :param img: Binary image with cell in it
+    :param contour: Contour of the cell in the image
+    :param img_result: Image to display the found defects
+    :return: Cont of the found defects
+    """
     img_gray = img.copy()
     img_cont = img.copy()
     cv2.drawContours(img_cont, [contour], 0, (255, 255, 255), cv2.FILLED)
 
-    # Invert floodfilled image
+    # Invert image
     img_cont_inv = cv2.bitwise_not(img_cont)
+    cv2.imwrite('FindDefects_1_contour_inverted.bmp', img_cont_inv)
 
-    # Combine the two images to get the foreground.
+    # Combine images to found scattered regions
     img_comb_inv = img_gray | img_cont_inv
+    cv2.imwrite('FindDefects_2_combined_inverted.bmp', img_comb_inv)
 
+    # Invert again
     img_comb = cv2.bitwise_not(img_comb_inv)
+    cv2.imwrite('FindDefects_3_combined.bmp', img_comb)
 
+    # Erode image to clear from scatters created by inaccurate contours detection
     img_erod = cv2.erode(img_comb, None, iterations=1)
+    cv2.imwrite('FindDefects_4_eroded.bmp', img_erod)
+
+    # Find the scattered regions
     cnts, _ = cv2.findContours(img_erod, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     defect_count = 0
@@ -105,6 +151,7 @@ def find_cell_defects(img, contour, img_result):
     for c in cnts:
         area = cv2.contourArea(c)
 
+        # Count scattered region greater than a given threshold and mark them in the result image
         if area > 3:
             pnts = c.ravel()
             label = "Defect area [px^2]: {}".format(area)
@@ -116,6 +163,13 @@ def find_cell_defects(img, contour, img_result):
 
 
 def draw_legend(filename, img_result):
+    """
+    Draw legend for cell measurments into a display image
+
+    :param filename: Filename of the given processed image
+    :param img_result: Image to display the legend
+    :return: None
+    """
     cv2.arrowedLine(img_result, (30, 30), (130, 30), COLOR_INFO, 1)
     cv2.putText(img_result, "X", (140, 35), font, 0.8, COLOR_INFO)
     cv2.arrowedLine(img_result, (30, 30), (30, 130), COLOR_INFO, 1)

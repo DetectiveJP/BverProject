@@ -11,7 +11,7 @@ Y = 1
 ANGLE = 2
 
 # Factors and coefficients
-px2mmFactor = 0.166313559322033
+px2mmFactor = 0
 mtx = None
 dist = None
 error = None
@@ -26,10 +26,9 @@ def main():
     squareLenght = 26  # Lenght of a square block on the chess board image
 
     print("Read calibration images with chessboard pattern and calibrate camera ===========\n")
-    mtx, dist, error, px2mmFactor = image.calibrate_camera(img_src_path_calib, chessBoardPattern, squareLenght)
+    mtx, dist, repro_error, px2mmFactor = image.calibrate_camera(img_src_path_calib, chessBoardPattern, squareLenght)
 
     print("Read production images and process them ========================================\n")
-
     # Load image list
     list_image = image.load_image_list(image_src_path_prod)
 
@@ -61,6 +60,10 @@ def main():
         print("Cell defect count [n]: " + str(cell_defect_count))
         print("\n")
 
+        # Show result
+        cv2.imshow('Processed image', img_result)
+        cv2.waitKey(100)
+
         # Save result
         binary_save_path = os.path.join(image_src_path_prod, 'Binary')
         if os.path.exists(binary_save_path):
@@ -89,7 +92,6 @@ def main():
             f.write("Cell defect count [n]: " + str(cell_defect_count) + "\n")
             f.close()
 
-    cv2.waitKey()
     cv2.destroyAllWindows()
 
 
