@@ -28,3 +28,5 @@ StringVision/pictures/product/Protocol/Image__2020-05-15__11-21-51_protocol.txt
 StringVision/pictures/product/Protocol/Image__2020-05-15__11-21-41_protocol.txt
 StringVision/pictures/product/Protocol/Image__2020-05-15__11-20-25_protocol.txt
 *.txt
+StringVision/SavePicture.py
+StringVision/CameraSetup.py
