@@ -1,0 +1,15 @@
+Review log
+Loaded image: Image__2020-05-15__11-22-25.bmp
+
+Calibration
+Total calibration error: 0.0559456539243095 
+Camera Matrix: [11732.30540011     0.           665.74977297] 
+               [    0.         11705.67466576   562.71413645] 
+               [0. 0. 1.] 
+Distortion coefficients [[-2.67157418e+00  8.99872147e+01  3.59290654e-02  4.46361625e-02
+   2.16830785e-01]]
+
+Cell width [px]: 158.2887465108496
+Cell width [mm]: 158.2887465108496
+Cell orientation [deg]: 1.3266125159042679
+Cell defect count [n]: 1
