@@ -1,6 +1,7 @@
-import cv2
-import numpy as np
 import os
+import cv2              # OpenCV. (2015). Open Source Computer Vision Library.
+import numpy as np      # Oliphant, T. E. (2006). A guide to NumPy (Vol. 1). Trelgol Publishing USA.
+
 
 # Color to mark cell contour
 COLOR_CELL = (0, 255, 0)
@@ -28,7 +29,7 @@ def load_image_list(path):
     """
     Create a list of images from given path
 
-    :param path: Paht to folder with images to process
+    :param path: Path to folder with images to process
     :return: List of images inside the folder on path
     """
     directory = path
@@ -164,10 +165,11 @@ def extract_cell(img):
 
     # Convert to binary image
     ret, img_binary = cv2.threshold(img_loaded, 100, 255, cv2.THRESH_BINARY_INV)
-    cv2.imwrite('ExtractCell_1_binary.bmp',img_binary)
+    cv2.imwrite('ExtractCell_1_binary.bmp', img_binary)
 
     # Erode image to eliminate wires between cells
     img_eroded = cv2.erode(img_binary, None, iterations=1)
+
     cv2.imwrite('ExtractCell_2_eroded.bmp', img_eroded)
 
     # Fill holes to eliminate sprinkles on cell
@@ -181,7 +183,13 @@ def extract_cell(img):
     img_border_removed = remove_boarders(img_border_removed, tuple(seed), 0)
 
     # Find second cell an remove them to get only one cell
-    ret, seed[0] = find_object(img_border_removed, seed)
+    seed = [1600, 600]
+    ret, seed[0] = find_object(img_border_removed, seed, -1, 500)
+    if ret:
+        img_border_removed = remove_boarders(img_border_removed, tuple(seed), 0)
+
+    seed = [0, 600]
+    ret, seed[0] = find_object(img_border_removed, seed, 1, 200)
     if ret:
         img_border_removed = remove_boarders(img_border_removed, tuple(seed), 0)
     cv2.imwrite('ExtractCell_4_removed_borders.bmp', img_border_removed)
@@ -189,26 +197,28 @@ def extract_cell(img):
     return img_border_removed
 
 
-def find_object(img, seed):
+def find_object(img, seed, direction, distance):
     """
     Find a bright object in a binary image to create a seed for boarder remove method. Searching is
     only done in horizontal direction.
 
+    :param      distance: Horizontal search distance
+    :param      direction: Horizontal search direction, 1 = right to left, -1 = left to right
     :param      img: binary image
     :param      seed: Start point for the serach of a bright object
     :return:    ret successful/failed to find a bright object,
-                i = index, where the bright object was found in horizontal direciton
+                i = index, where the bright object was found in horizontal direction
     """
     img_find = img.copy()
-    i = seed[0]
-    while img_find[seed[1], i] != 255:
-        i -= 1
-        if i == 0:
+    found = seed[0]
+    ret = False
+    for i in range(seed[0], seed[0] + distance * direction, direction):
+        if img_find[seed[1], i] == 255:
+            found = i
+            ret = True
             break
 
-    ret = img_find[seed[1], i] == 255
-
-    return ret, i
+    return ret, found
 
 
 def find_chessboard_corners(img, pattern):

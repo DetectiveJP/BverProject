@@ -1,7 +1,6 @@
 import datetime
-
-import cv2
-import numpy as np
+import cv2              # OpenCV. (2015). Open Source Computer Vision Library.
+import numpy as np      # Oliphant, T. E. (2006). A guide to NumPy (Vol. 1). Trelgol Publishing USA.
 
 COLOR_MEASUREMENT = (238, 0, 238)
 COLOR_INFO = (255, 255, 255)
