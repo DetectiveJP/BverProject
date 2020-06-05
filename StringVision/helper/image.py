@@ -313,13 +313,34 @@ def calibrate_camera(path, pattern, length):
         mean_error += error
 
     reprojected_error = mean_error / len(objpoints)
-    print("Total calibration error: {}".format(error) + "\n")
+    print("Total re-projection error: {}".format(reprojected_error) + "\n")
 
     # Scale pixel to mm on chessboard
     load_path = os.path.join(path, images[0])
     img_chessboard = load_images(load_path)
     img_undist = undistorted_image(img_chessboard, mtx, dist, 0)
     factor = scale_pixel2mm(img_undist, pattern, length)
+
+    # generate a Protocol
+    protocol_save_path = os.path.join(path, 'Protocol')
+    if not os.path.exists(protocol_save_path):
+        try:
+            os.mkdir(protocol_save_path)
+        except OSError:
+            print("Creation of the directory %s failed" % path)
+
+    if os.path.exists(protocol_save_path):
+        f = open(os.path.join(protocol_save_path, 'camera_calibration_protocol.txt'), 'w+')
+        f.write('Camera calibration protocol from StringVision.py\n')
+        f.write('================================================\n\n')
+        f.write("- Total re-projection error: {} ".format(reprojected_error) + "\n\n")
+        cam_mtx = mtx.ravel()
+        f.write(f'- Camera matrix:\n\tf_x = {cam_mtx[0]}\n\tf_y = {cam_mtx[4]}')
+        f.write(f'\n\tc_y = {cam_mtx[5]}\n\tc_x = {cam_mtx[2]}\n')
+        f.write("\n")
+        dist_coef = dist.ravel()
+        f.write(f'- Distortion coefficients:\n\tk_1 = {dist_coef[0]}\n\tk_2 = {dist_coef[1]}')
+        f.write(f'\n\tp_1 = {dist_coef[2]}\n\tp_2 = {dist_coef[3]}\n\tk_3 = {dist_coef[4]}\n')
 
     return mtx, dist, reprojected_error, factor
 
