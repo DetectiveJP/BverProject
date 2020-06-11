@@ -1,7 +1,14 @@
+"""*******************************************************
+* Title:        StringVision/helper/image.py
+* Authors:      Dario Spadola, Dennis Herren
+* Date:         11/06/2020
+* Code version: 1.0
+* Availability: https://github.com/DetectiveJP/BverProject
+*******************************************************"""
+
 import os
 import cv2              # OpenCV. (2015). Open Source Computer Vision Library.
 import numpy as np      # Oliphant, T. E. (2006). A guide to NumPy (Vol. 1). Trelgol Publishing USA.
-
 
 # Color to mark cell contour
 COLOR_CELL = (0, 255, 0)
@@ -29,6 +36,10 @@ def load_image_list(path):
     """
     Create a list of images from given path
 
+    Author:         Vuyisile Ndlovu
+    Accessed:       11/06/2020
+    Availability:   https://realpython.com/working-with-files-in-python/
+
     :param path: Path to folder with images to process
     :return: List of images inside the folder on path
     """
@@ -47,7 +58,9 @@ def fill_holes(img, seed, val):
     """
     Removes small holes in the image starting on a certain seed point.
 
-    Source: https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
+    Author:         Satya Mallick
+    Date:           23/11/2015
+    Availability:   https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
 
     :param img: Gray scale image in which the boarders should be removed
     :param seed: Seed point, where the flood fill needs to start
@@ -83,7 +96,9 @@ def remove_boarders(img, seed, val):
     """
     Remove boarders using floodfill(). Starts at a certain seed point with given value
 
-    Source: https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
+    Author:         Satya Mallick
+    Date:           23/11/2015
+    Availability:   https://www.learnopencv.com/filling-holes-in-an-image-using-opencv-python-c/
 
     :param img: Gray scale image in which the boarders should be removed
     :param seed: Seed point, where the flood fill needs to start
@@ -106,7 +121,9 @@ def find_contours(img):
     """
     Find cell contours in a image and draw into the image.
 
-    Source: https://www.geeksforgeeks.org/find-co-ordinates-of-contours-using-opencv-python/?ref=rp
+    Author:         Vyom Garg
+    Date:           04/10/2019
+    Availability:   https://www.geeksforgeeks.org/find-co-ordinates-of-contours-using-opencv-python/?ref=rp
 
     :param img: Binary image with one single cell in it, where the contours should be found
     :return: Corners of the found cell and a image with found contour draw in into it.
@@ -225,8 +242,9 @@ def find_chessboard_corners(img, pattern):
     """
     Finds corners of a chessboard in a image including subcorner accuarcy
 
-    Source:
-    https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
+    Author:         Alexander Mordvintsev & Abid K.
+    Accessed:       11/06/2020
+    Availability:   https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
 
     :param img: Image with chessboard pattern
     :param pattern: Dimension of the chessboard pattern
@@ -255,8 +273,9 @@ def calibrate_camera(path, pattern, length):
     Reads chessboard images and calibrates camera with camera matrix and distortion coefficients.
     Calculates scale factor between image and real world coordinates.
 
-    Source:
-    https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
+    Author:         Alexander Mordvintsev & Abid K.
+    Accessed:       11/06/2020
+    Availability:   https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
 
     :param path: Path to folder with chessboard pictures
     :param pattern: Chessboard pattern on images for calibration
@@ -391,7 +410,9 @@ def undistorted_image(image, mtx, dist, alpha):
     """
     Creates an image without distortion by a given camera matrix and distortion coefficients.
 
-    Source: https://www.programcreek.com/python/example/84096/cv2.undistort
+    Author:         MomsFriendlyRobotCompany
+    Accessed:       11/06/2020
+    Availability:   https://www.programcreek.com/python/example/84096/cv2.undistort
 
     image: an image
     alpha = 0: returns undistored image with minimum unwanted pixels (image

@@ -1,3 +1,11 @@
+"""*******************************************************
+* Title:        StringVision/helper/measurement.py
+* Authors:      Dario Spadola, Dennis Herren
+* Date:         11/06/2020
+* Code version: 1.0
+* Availability: https://github.com/DetectiveJP/BverProject
+*******************************************************"""
+
 import datetime
 import cv2              # OpenCV. (2015). Open Source Computer Vision Library.
 import numpy as np      # Oliphant, T. E. (2006). A guide to NumPy (Vol. 1). Trelgol Publishing USA.
